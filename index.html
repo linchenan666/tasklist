@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#4f46e5" />
+  <title>任务清单 · TaskList</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="app" class="app">
+    <!-- ============ 侧边栏 ============ -->
+    <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+    <aside id="sidebar" class="sidebar">
+      <div class="sidebar-top">
+        <div class="app-title">
+          <span class="logo">✅</span>
+          <span data-i18n="appTitle">任务清单</span>
+        </div>
+        <button id="sidebar-close" class="icon-btn hide-on-desktop" title="收起">✕</button>
+      </div>
+
+      <!-- 快速添加(自然语言) -->
+      <div class="quick-add">
+        <input id="quick-add-input" type="text" autocomplete="off"
+               placeholder="快速添加: 明天下午3点买牛奶 #购物 @生活 !高" data-i18n-ph="quickAddPh" />
+      </div>
+
+      <!-- 账号 / 同步状态 -->
+      <div class="account-box" id="account-box">
+        <button id="login-btn" class="btn btn-block btn-ghost">🔐 登录同步(可选)</button>
+      </div>
+
+      <!-- 智能视图 -->
+      <nav class="nav smart-views">
+        <button class="nav-item" data-view="myday" title="我的今天">☀️ <span data-i18n="myday">我的今天</span></button>
+        <button class="nav-item" data-view="today" title="今天到期">📅 <span data-i18n="today">今天</span></button>
+        <button class="nav-item" data-view="upcoming" title="未来7天">⏭️ <span data-i18n="upcoming">即将到期</span></button>
+        <button class="nav-item" data-view="overdue" title="已逾期">🔴 <span data-i18n="overdue">已逾期</span></button>
+        <button class="nav-item" data-view="inbox" title="收件箱">📥 <span data-i18n="inbox">收件箱</span></button>
+        <button class="nav-item" data-view="completed" title="已完成">✔️ <span data-i18n="completed">已完成</span></button>
+        <button class="nav-item" data-view="logbook" title="日志">📖 <span data-i18n="logbook">日志</span></button>
+        <button class="nav-item" data-view="all" title="全部">📚 <span data-i18n="all">全部</span></button>
+      </nav>
+
+      <!-- 清单 -->
+      <div class="section-head">
+        <span data-i18n="lists">清单</span>
+        <button id="add-list-btn" class="icon-btn" title="新建清单">＋</button>
+      </div>
+      <nav class="nav lists" id="lists"></nav>
+
+      <!-- 自定义智能清单 -->
+      <div class="section-head">
+        <span data-i18n="smartLists">智能清单</span>
+        <button id="add-filter-btn" class="icon-btn" title="新建智能清单">＋</button>
+      </div>
+      <nav class="nav filters" id="filter-lists"></nav>
+
+      <div class="sidebar-spacer"></div>
+
+      <!-- 底部 -->
+      <nav class="nav bottom-nav">
+        <button class="nav-item" data-view="matrix" title="四象限">🧭 <span data-i18n="matrix">四象限</span></button>
+        <button class="nav-item" data-view="archive" title="归档">🗂️ <span data-i18n="archive">归档</span></button>
+        <button class="nav-item" data-view="trash" title="回收站">🗑️ <span data-i18n="trash">回收站</span></button>
+      </nav>
+      <div class="sidebar-footer">
+        <button id="theme-btn" class="btn btn-ghost btn-block" title="切换主题">🌙 深色模式</button>
+        <button id="pw-btn" class="btn btn-ghost btn-block" title="数据加密">🔒 <span data-i18n="password">数据加密</span></button>
+        <button id="lang-btn" class="btn btn-ghost btn-block" title="切换语言">🌐 <span data-i18n="language">EN</span></button>
+        <div class="footer-row">
+          <button id="export-btn" class="btn btn-ghost"><span data-i18n="export">导出</span></button>
+          <button id="import-btn" class="btn btn-ghost"><span data-i18n="import">导入</span></button>
+          <button id="stats-btn" class="btn btn-ghost">📊 <span data-i18n="stats">统计</span></button>
+          <button id="shortcut-btn" class="btn btn-ghost" title="快捷键">?</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ============ 主区域 ============ -->
+    <main class="main">
+      <header class="topbar">
+        <button id="menu-btn" class="icon-btn hide-on-desktop" title="菜单">☰</button>
+        <button id="back-btn" class="icon-btn" title="返回" disabled>←</button>
+        <button id="forward-btn" class="icon-btn" title="前进" disabled>→</button>
+        <h2 id="view-title" class="view-title">全部</h2>
+        <span id="task-count" class="task-count"></span>
+
+        <div class="toolbar">
+          <input id="search-input" type="search" autocomplete="off" placeholder="搜索任务…" data-i18n-ph="search" />
+          <div class="view-switch" id="view-switch">
+            <button data-layout="list" class="active" title="列表">☰</button>
+            <button data-layout="board" title="看板">▦</button>
+            <button data-layout="calendar" title="日历">📅</button>
+            <button data-layout="matrix" title="四象限">🧭</button>
+          </div>
+          <button id="pomodoro-btn" class="btn btn-ghost" title="番茄钟">🍅</button>
+          <button id="filter-toggle-btn" class="btn btn-ghost" title="筛选">⚙ <span class="btn-label" data-i18n="filter">筛选</span></button>
+          <button id="batch-btn" class="btn btn-ghost" title="多选">☑ <span class="btn-label" data-i18n="batch">多选</span></button>
+        </div>
+      </header>
+
+      <!-- 筛选栏 -->
+      <div id="filter-bar" class="filter-bar hidden">
+        <label>状态
+          <select id="f-status">
+            <option value="">全部</option>
+            <option value="todo">待办</option>
+            <option value="in_progress">进行中</option>
+            <option value="done">已完成</option>
+          </select>
+        </label>
+        <label>优先级
+          <select id="f-priority">
+            <option value="">全部</option>
+            <option value="high">高</option>
+            <option value="medium">中</option>
+            <option value="low">低</option>
+            <option value="none">无</option>
+          </select>
+        </label>
+        <label>标签
+          <select id="f-tag"><option value="">全部</option></select>
+        </label>
+        <label>日期
+          <select id="f-date">
+            <option value="">全部</option>
+            <option value="has">有截止日期</option>
+            <option value="none">无截止日期</option>
+          </select>
+        </label>
+        <label>排序
+          <select id="f-sort">
+            <option value="order">手动顺序</option>
+            <option value="due">截止日期</option>
+            <option value="priority">优先级</option>
+            <option value="created">创建时间</option>
+            <option value="title">标题</option>
+          </select>
+        </label>
+        <label class="chk"><input type="checkbox" id="f-hide-done" /> 隐藏已完成</label>
+        <button id="clear-done-btn" class="btn btn-ghost btn-sm">清空已完成</button>
+        <button id="f-clear" class="btn btn-ghost btn-sm">重置</button>
+      </div>
+
+      <!-- 进度条 -->
+      <div class="progress-wrap" id="progress-wrap">
+        <div class="progress-bar" id="progress-bar"></div>
+        <span class="progress-text" id="progress-text"></span>
+      </div>
+
+      <!-- 内容区 -->
+      <section id="content" class="content">
+        <div id="list-view" class="view list-view"></div>
+        <div id="board-view" class="view board-view hidden"></div>
+        <div id="calendar-view" class="view calendar-view hidden"></div>
+        <div id="matrix-view" class="view matrix-view hidden"></div>
+      </section>
+    </main>
+  </div>
+
+  <!-- ============ 任务编辑弹窗 ============ -->
+  <div id="task-modal" class="modal-overlay hidden">
+    <div class="modal modal-lg">
+      <div class="modal-head">
+        <h3 id="task-modal-title">编辑任务</h3>
+        <button class="icon-btn modal-close" data-close="task-modal">✕</button>
+      </div>
+      <div class="modal-body">
+        <input id="t-title" class="input input-lg" type="text" placeholder="任务标题(必填)" />
+        <div class="inline template-row">
+          <select id="t-template"><option value="">— 从模板新建 —</option></select>
+          <button id="t-save-template" class="btn btn-ghost btn-sm" title="把当前任务存为模板">存为模板</button>
+        </div>
+        <div class="form-grid">
+          <label>清单
+            <select id="t-list"></select>
+          </label>
+          <label>优先级
+            <div class="seg" id="t-priority">
+              <button data-v="high">🔴 高</button>
+              <button data-v="medium">🟡 中</button>
+              <button data-v="low">🔵 低</button>
+              <button data-v="none">⚪ 无</button>
+            </div>
+          </label>
+          <label>状态
+            <div class="seg" id="t-status">
+              <button data-v="todo">待办</button>
+              <button data-v="in_progress">进行中</button>
+              <button data-v="done">完成</button>
+            </div>
+          </label>
+          <label>截止日期
+            <div class="inline">
+              <input id="t-due-date" type="date" />
+              <input id="t-due-time" type="time" />
+              <button id="t-due-clear" class="icon-btn" title="清除">✕</button>
+            </div>
+            <div class="date-quick">
+              <button type="button" data-quick="today" class="btn btn-ghost btn-sm">今天</button>
+              <button type="button" data-quick="tomorrow" class="btn btn-ghost btn-sm">明天</button>
+              <button type="button" data-quick="week" class="btn btn-ghost btn-sm">下周</button>
+            </div>
+          </label>
+          <label>重复
+            <select id="t-repeat"></select>
+          </label>
+          <label>提醒
+            <select id="t-reminder"></select>
+          </label>
+          <label>标签(逗号分隔)
+            <input id="t-tags" type="text" placeholder="购物, 工作" />
+          </label>
+          <label class="chk"><input type="checkbox" id="t-starred" /> ⭐ 星标</label>
+          <label class="chk"><input type="checkbox" id="t-pinned" /> 📌 置顶</label>
+        </div>
+        <label>描述
+          <textarea id="t-description" rows="2" placeholder="补充说明…"></textarea>
+        </label>
+        <label>备注
+          <textarea id="t-notes" rows="2" placeholder="私人备注…"></textarea>
+        </label>
+        <div class="subtasks">
+          <div class="section-head"><span>子任务</span><span id="t-subtask-progress"></span></div>
+          <ul id="t-subtasks"></ul>
+          <div class="inline">
+            <input id="t-subtask-input" type="text" placeholder="添加子任务,回车确认" />
+            <button id="t-subtask-add" class="btn btn-ghost">＋</button>
+          </div>
+        </div>
+        <div class="task-meta" id="task-meta"></div>
+      </div>
+      <div class="modal-foot">
+        <button id="t-delete" class="btn btn-danger">删除</button>
+        <div class="spacer"></div>
+        <button class="btn btn-ghost modal-close" data-close="task-modal">取消</button>
+        <button id="t-save" class="btn btn-primary">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 清单编辑弹窗 ============ -->
+  <div id="list-modal" class="modal-overlay hidden">
+    <div class="modal modal-sm">
+      <div class="modal-head"><h3 id="list-modal-title">新建清单</h3><button class="icon-btn modal-close" data-close="list-modal">✕</button></div>
+      <div class="modal-body">
+        <label>名称<input id="l-name" class="input" type="text" placeholder="清单名称" /></label>
+        <label>颜色
+          <div class="colors" id="l-color"></div>
+        </label>
+        <label>所属文件夹
+          <select id="l-parent"><option value="">(无,作为顶层清单)</option></select>
+        </label>
+      </div>
+      <div class="modal-foot">
+        <button id="l-delete" class="btn btn-danger hidden">删除清单</button>
+        <div class="spacer"></div>
+        <button class="btn btn-ghost modal-close" data-close="list-modal">取消</button>
+        <button id="l-save" class="btn btn-primary">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 智能清单弹窗 ============ -->
+  <div id="filter-modal" class="modal-overlay hidden">
+    <div class="modal modal-sm">
+      <div class="modal-head"><h3>智能清单</h3><button class="icon-btn modal-close" data-close="filter-modal">✕</button></div>
+      <div class="modal-body">
+        <label>名称<input id="fl-name" class="input" type="text" placeholder="如: 高优先级工作" /></label>
+        <label>状态
+          <select id="fl-status"><option value="">不限</option><option value="todo">待办</option><option value="in_progress">进行中</option><option value="done">已完成</option></select>
+        </label>
+        <label>优先级
+          <select id="fl-priority"><option value="">不限</option><option value="high">高</option><option value="medium">中</option><option value="low">低</option><option value="none">无</option></select>
+        </label>
+        <label>标签<input id="fl-tag" class="input" type="text" placeholder="购物" /></label>
+        <label>清单
+          <select id="fl-list"><option value="">不限</option></select>
+        </label>
+        <label>日期范围
+          <select id="fl-due">
+            <option value="">不限</option>
+            <option value="today">今天</option>
+            <option value="week">未来7天</option>
+            <option value="overdue">已逾期</option>
+            <option value="none">无日期</option>
+          </select>
+        </label>
+      </div>
+      <div class="modal-foot">
+        <button id="fl-delete" class="btn btn-danger hidden">删除</button>
+        <div class="spacer"></div>
+        <button class="btn btn-ghost modal-close" data-close="filter-modal">取消</button>
+        <button id="fl-save" class="btn btn-primary">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 统计弹窗 ============ -->
+  <div id="stats-modal" class="modal-overlay hidden">
+    <div class="modal modal-lg">
+      <div class="modal-head"><h3>📊 统计报告</h3><button class="icon-btn modal-close" data-close="stats-modal">✕</button></div>
+      <div class="modal-body">
+        <div class="stat-cards" id="stat-cards"></div>
+        <div class="chart-row">
+          <div class="chart-box"><h4>近30天完成趋势</h4><canvas id="chart-trend" width="460" height="180"></canvas></div>
+          <div class="chart-box"><h4>优先级分布</h4><canvas id="chart-priority" width="220" height="180"></canvas></div>
+        </div>
+        <div class="chart-row">
+          <div class="chart-box"><h4>专注热力图(近12周)</h4><div id="heatmap" class="heatmap"></div></div>
+        </div>
+        <h4 class="ach-title">🏅 成就徽章</h4>
+        <div id="achievements" class="achievements"></div>
+        <div id="weekly-report" class="weekly-report"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 确认弹窗 ============ -->
+  <div id="confirm-modal" class="modal-overlay hidden">
+    <div class="modal modal-sm">
+      <div class="modal-head"><h3 id="confirm-title">确认</h3></div>
+      <div class="modal-body"><p id="confirm-text">确定吗?</p></div>
+      <div class="modal-foot">
+        <button class="btn btn-ghost" id="confirm-no">取消</button>
+        <button class="btn btn-danger" id="confirm-yes">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 登录弹窗 ============ -->
+  <div id="auth-modal" class="modal-overlay hidden">
+    <div class="modal modal-sm">
+      <div class="modal-head"><h3 id="auth-title">登录同步</h3><button class="icon-btn modal-close" data-close="auth-modal">✕</button></div>
+      <div class="modal-body">
+        <p class="muted">登录后数据自动同步到云端,手机/平板/电脑数据互通。未登录时数据只存在本机。</p>
+        <label>邮箱<input id="a-email" class="input" type="email" placeholder="you@example.com" /></label>
+        <label>密码<input id="a-password" class="input" type="password" placeholder="••••••••" /></label>
+        <div id="auth-error" class="auth-error hidden"></div>
+      </div>
+      <div class="modal-foot">
+        <button id="a-mode" class="btn btn-ghost">去注册</button>
+        <div class="spacer"></div>
+        <button class="btn btn-ghost modal-close" data-close="auth-modal">取消</button>
+        <button id="a-submit" class="btn btn-primary">登录</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 数据加密弹窗 ============ -->
+  <div id="lock-modal" class="modal-overlay hidden">
+    <div class="modal modal-sm">
+      <div class="modal-head"><h3>🔒 数据加密</h3><button class="icon-btn modal-close" data-close="lock-modal">✕</button></div>
+      <div class="modal-body">
+        <p class="muted small">设置访问密码后,数据将以 AES-256 加密存储,打开应用时需输入密码。</p>
+        <label>当前密码(首次设置或未加密时留空)<input id="pw-current" type="password" autocomplete="off" /></label>
+        <label>新密码<input id="pw-new" type="password" autocomplete="off" /></label>
+        <label>确认新密码<input id="pw-confirm" type="password" autocomplete="off" /></label>
+        <div id="pw-error" class="auth-error hidden"></div>
+        <p class="muted small">⚠️ 忘记密码将无法恢复数据,请务必牢记。</p>
+      </div>
+      <div class="modal-foot">
+        <button id="pw-remove" class="btn btn-danger">取消密码</button>
+        <div class="spacer"></div>
+        <button class="btn btn-ghost modal-close" data-close="lock-modal">取消</button>
+        <button id="pw-save" class="btn btn-primary">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 快捷键面板 ============ -->
+  <div id="shortcut-modal" class="modal-overlay hidden">
+    <div class="modal modal-sm">
+      <div class="modal-head"><h3>⌨ 快捷键</h3><button class="icon-btn modal-close" data-close="shortcut-modal">✕</button></div>
+      <div class="modal-body shortcut-list">
+        <div><kbd>N</kbd> 新建任务</div>
+        <div><kbd>/</kbd> 聚焦搜索</div>
+        <div><kbd>1</kbd>-<kbd>7</kbd> 切换视图</div>
+        <div><kbd>Esc</kbd> 关闭弹窗 / 清除搜索</div>
+        <div><kbd>Ctrl+Z</kbd> 撤销</div>
+        <div><kbd>Ctrl+Shift+Z</kbd> 重做</div>
+        <div><kbd>Alt+←</kbd> 返回上一界面</div>
+        <div><kbd>?</kbd> 显示快捷键</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 番茄钟面板 ============ -->
+  <div id="pomodoro-panel" class="pomodoro-panel hidden">
+    <button class="icon-btn pomodoro-close" id="pomodoro-close">✕</button>
+    <h4>🍅 番茄钟</h4>
+    <div id="pomodoro-time" class="pomodoro-time">25:00</div>
+    <div class="pomodoro-mode" id="pomodoro-mode">工作</div>
+    <div class="pomodoro-controls">
+      <button id="pomodoro-start" class="btn btn-primary">开始</button>
+      <button id="pomodoro-reset" class="btn btn-ghost">重置</button>
+      <button id="pomodoro-skip" class="btn btn-ghost">跳过</button>
+    </div>
+    <label class="muted small">绑定任务<select id="pomodoro-task"></select></label>
+    <div class="pomodoro-settings">
+      <label>工作<select id="pom-work"></select>分</label>
+      <label>休息<select id="pom-break"></select>分</label>
+    </div>
+    <div class="muted small">今日专注:<span id="pomodoro-today">0 分</span> · 完成番茄:<span id="pomodoro-count">0</span></div>
+  </div>
+
+  <!-- 悬浮新建按钮 -->
+  <button id="fab-add" class="fab" title="新建任务(N)">＋</button>
+
+  <!-- 批量操作栏 -->
+  <div id="batch-bar" class="batch-bar hidden">
+    <span id="batch-count" class="batch-count">已选 0 项</span>
+    <button id="batch-done" class="btn btn-sm">✓ 完成</button>
+    <button id="batch-delete" class="btn btn-sm btn-danger">删除</button>
+    <select id="batch-list"><option value="">移动到清单…</option></select>
+    <select id="batch-priority"><option value="">设优先级…</option><option value="high">高</option><option value="medium">中</option><option value="low">低</option><option value="none">无</option></select>
+    <button id="batch-cancel" class="btn btn-sm btn-ghost">取消</button>
+  </div>
+
+  <!-- 提示容器 -->
+  <div id="toasts" class="toasts"></div>
+
+  <!-- 锁屏(启动时若已加密) -->
+  <div id="lock-screen" class="lock-screen hidden">
+    <div class="lock-box">
+      <div class="lock-icon">🔒</div>
+      <h3>输入密码解锁</h3>
+      <input id="lock-password" type="password" placeholder="访问密码" autocomplete="off" />
+      <div id="lock-error" class="auth-error hidden"></div>
+      <button id="lock-unlock" class="btn btn-primary btn-block">解锁</button>
+      <p class="muted small">忘记密码将无法恢复数据,请牢记密码。</p>
+      <button id="lock-reset" class="btn btn-ghost btn-sm btn-block">清空数据并重新开始</button>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/sync.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
